@@ -160,19 +160,111 @@ void unit_matrix_forward_reverse(QVector<QVector<fract>>& matrix){
         cout_matrix(matrix);
     }
 }
+int countNullRow(QVector<QVector<fract>>matrix){
+    int count = 0;
+    for(int i = 0; i < matrix.size(); i++){
+        if(check_line_forward(matrix[i])){
+            count++;
+        }
+    }
+    return count;
+}
+int idxNullRow(QVector<QVector<fract>>matrix){
+    for(int i = 0; i < matrix.size(); i++){
+        if(check_line_forward(matrix[i])){
+            return i;
+        }
+    }
+    return -1;
+}
+int num_glues(int rang){
+    if(rang%2 != 0){
+        rang-=1;
+    }
+    return rang/2;
+}
+QVector<QVector<int>> combinations(QVector<QVector<int>> vec_pair, int rang){
+    QVector<int> comb;
+    QVector<QVector<int>> vec_rang, vec_rang_ass, vec_pair_local = vec_pair;
+    for(int countrang = 0; countrang < rang-2; countrang++){
+        vec_rang.clear();
+        for(int i = 0; i < vec_pair.size(); i++){
+            for(int j = 0; j < vec_pair_local.size(); j++){
+                for(int k = 0; k < 2+countrang; k++){
+                    comb.push_back(vec_pair[i][k]);
+                }
+
+                for(int k = 0; k < vec_pair_local[0].size(); k++){
+                    comb.push_back(vec_pair_local[j][k]);
+                }
+
+
+                vec_rang.push_back(comb);
+                comb.clear();
+            }
+        }
+        for(int i = 0; i < vec_rang.size(); i++){
+        }
+        for(int i = 0; i < vec_rang.size(); i++){
+            if(vec_rang[i][vec_rang[i].size()-2] == vec_rang[i][vec_rang[i].size()-3]){
+                vec_rang_ass.push_back(vec_rang[i]);
+            }
+        }
+        for(int i = 0; i < vec_rang_ass.size(); i++){
+        }
+        for(int i = 0; i < vec_rang_ass.size(); i++){
+            auto iter = vec_rang_ass[i].cbegin(); // указатель на первый элемент
+            vec_rang_ass[i].erase(iter + (vec_rang_ass[i].size()-3));
+        }
+        vec_pair = vec_rang_ass;
+        vec_rang_ass.clear();
+    }
+return vec_pair;
+}
+void basic_solutions(QVector<QVector<fract>>matrix){
+    int countNullR = countNullRow(matrix);
+    for(int i = 0; i < countNullR; i++){
+        auto iter = matrix.cbegin();
+        matrix.erase(iter + idxNullRow(matrix));
+    }
+    cout<< "delete null"<<endl;
+    cout_matrix(matrix);
+    cout<< "combination"<<endl;
+    QVector<int> pair;
+    QVector<QVector<int>> vec_pair;
+    for(int i = 0; i < matrix[0].size()-2; i++){
+        for(int j = i+1; j < matrix[0].size()-1; j++){
+            pair.push_back(i);
+            pair.push_back(j);
+            vec_pair.push_back(pair);
+            pair.clear();
+        }
+    }
+    for(int i = 0; i <vec_pair.size(); i++){
+        qDebug()<<vec_pair[i];
+    }
+    QVector<QVector<int>> comb = combinations(vec_pair, 4);
+    for(int i = 0; i <comb.size(); i++){
+        qDebug()<<comb[i];
+    }
+
+}
+
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
     QVector<QVector<fract>> matrix;
     read_matrix(matrix);
     cout_matrix(matrix);
-//    unit_matrix_forward(matrix, f_col);
-//    cout_matrix(matrix);
-//    mirror(matrix);
+    //    unit_matrix_forward(matrix, f_col);
+    //    cout_matrix(matrix);
+    //    mirror(matrix);
     //cout_matrix(matrix);
-//    unit_matrix_reverse(matrix);
+    //    unit_matrix_reverse(matrix);
     unit_matrix_forward_reverse(matrix);
     cout<<"ANSWER"<<endl;
     cout_matrix(matrix);
+    basic_solutions(matrix);
+
     return a.exec();
 }
