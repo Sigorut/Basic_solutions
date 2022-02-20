@@ -80,7 +80,7 @@ void sort_row(QVector<QVector<fract>>& matrix, int yi, int xi){
     }
 }
 
-bool check_line_forward(QVector<fract> row){
+bool check_line_forward(QVector<fract> row, bool basic = false){
     int cnt = 0;
     bool flag = true;
     for(int i = 0; i < row.size(); i++){
@@ -91,12 +91,23 @@ bool check_line_forward(QVector<fract> row){
     }
     if(cnt == 1 && row[row.size() - 1].u_num != 0){
         qDebug() << "There are no solutions!";
-        exit(0);
+        if(!basic)
+            exit(0);
     }
     return flag;
 }
-
-
+bool check_line_forward_basic(QVector<fract> row){
+    int cnt = 0;
+    for(int i = 0; i < row.size(); i++){
+        if(row[i].u_num != 0){
+            cnt++;
+        }
+    }
+    if(cnt == 1 && row[row.size() - 1].u_num != 0){
+        return true;
+    }
+    return false;
+}
 void mirror(QVector<QVector<fract>>& matrix){
     int n_row = matrix.size();
     int n_col = matrix[0].size();
@@ -111,7 +122,7 @@ void mirror(QVector<QVector<fract>>& matrix){
     }
 }
 
-void unit_matrix_forward_reverse(QVector<QVector<fract>>& matrix){
+void unit_matrix_forward_reverse(QVector<QVector<fract>>& matrix, bool &solus, bool basic = false){
     Fraction obj;
     int n_row = matrix.size();
     int n_col = matrix[0].size();
@@ -119,8 +130,16 @@ void unit_matrix_forward_reverse(QVector<QVector<fract>>& matrix){
     for(int yi = 0, xi = 0, iter = 1; yi < n_row; yi++, xi++, iter++){
         sort_row(matrix, yi, xi);
         diag_num = matrix[yi][xi];
+    if(check_line_forward_basic(matrix[yi]) && basic) {
+        solus = true;
+        qDebug()<<"No solutions";
+        break;
+    }
         if(diag_num.u_num == 0){
-            if(check_line_forward(matrix[yi])){
+
+
+            if(check_line_forward(matrix[yi],basic)){
+
                 if(xi < n_col - 1 && yi < n_row - 1){
                     xi++;
                     yi++;
@@ -128,7 +147,7 @@ void unit_matrix_forward_reverse(QVector<QVector<fract>>& matrix){
                     return;
                 }
                 diag_num = matrix[yi][xi];
-                while(check_line_forward(matrix[yi])){
+                while(check_line_forward(matrix[yi],basic)){
                     if(xi < n_col - 1 && yi < n_row - 1){
                         xi++;
                         yi++;
@@ -156,8 +175,13 @@ void unit_matrix_forward_reverse(QVector<QVector<fract>>& matrix){
                 matrix[i][j] = obj.sum(matrix[i][j], obj.mult(matrix[yi][j],f_num), 1);
             }
         }
-        cout<<"IT: "<<iter<<endl;
-        cout_matrix(matrix);
+
+
+        if(!basic){
+            cout<<"IT: "<<iter<<endl;
+            cout_matrix(matrix);
+        }
+
     }
 }
 int countNullRow(QVector<QVector<fract>>matrix){
@@ -219,8 +243,9 @@ QVector<QVector<int>> combinations(QVector<QVector<int>> vec_pair, int rang){
         vec_pair = vec_rang_ass;
         vec_rang_ass.clear();
     }
-return vec_pair;
+    return vec_pair;
 }
+
 void basic_solutions(QVector<QVector<fract>>matrix){
     int countNullR = countNullRow(matrix);
     for(int i = 0; i < countNullR; i++){
@@ -240,14 +265,38 @@ void basic_solutions(QVector<QVector<fract>>matrix){
             pair.clear();
         }
     }
-    for(int i = 0; i <vec_pair.size(); i++){
-        qDebug()<<vec_pair[i];
-    }
-    QVector<QVector<int>> comb = combinations(vec_pair, 4);
+
+    QVector<QVector<int>> comb = combinations(vec_pair, matrix.size());
     for(int i = 0; i <comb.size(); i++){
         qDebug()<<comb[i];
     }
+    QVector<QVector<fract>>matrix_basic;
+    QVector<fract> matrix_basic_line;
+    for(int i = 0; i < comb.size(); i++){
 
+        for(int k = 0; k < matrix.size(); k++){
+            for(int j = 0; j <comb[i].size(); j++){
+                matrix_basic_line.push_back(matrix[k][comb[i][j]]);
+            }
+            matrix_basic_line.push_back(matrix[k][matrix[k].size()-1]);
+            //            for(int l = 0; l<matrix_basic_line.size(); l++){
+            //                cout<<matrix_basic_line[l].u_num<< "/"<<matrix_basic_line[l].d_num<<"\t";
+            //            }
+            qDebug()<<"";
+            matrix_basic.push_back(matrix_basic_line);
+            matrix_basic_line.clear();
+        }
+        cout_matrix(matrix_basic);
+        qDebug()<<"ANSWER BASIC";
+        bool checksol = 0;
+        unit_matrix_forward_reverse(matrix_basic, checksol, true);
+        cout_matrix(matrix_basic);
+        for(int j = 0; j < matrix_basic.size(); j ++){
+            if(!checksol)
+            cout<<"x"<<comb[i][j]<< " = "<< matrix_basic[j][matrix_basic[j].size()-1].u_num<<"/"<<matrix_basic[j][matrix_basic[j].size()-1].d_num<<endl;
+        }
+        matrix_basic.clear();
+    }
 }
 
 int main(int argc, char *argv[])
@@ -261,7 +310,8 @@ int main(int argc, char *argv[])
     //    mirror(matrix);
     //cout_matrix(matrix);
     //    unit_matrix_reverse(matrix);
-    unit_matrix_forward_reverse(matrix);
+    bool tc;
+    unit_matrix_forward_reverse(matrix, tc);
     cout<<"ANSWER"<<endl;
     cout_matrix(matrix);
     basic_solutions(matrix);
